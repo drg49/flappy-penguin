@@ -119,12 +119,14 @@ function create() {
 
   pipes = this.physics.add.group();
 
-  scoreText = this.add.text(12, 10, "Score: 0", {
-    fontSize: "24px",
-    fill: "#fff",
-    stroke: "#000",
-    strokeThickness: 3,
-  });
+  scoreText = this.add
+    .text(12, 10, "Score: 0", {
+      fontSize: "24px",
+      fill: "#fff",
+      stroke: "#000",
+      strokeThickness: 3,
+    })
+    .setDepth(10);
 
   jumpSound = this.sound.add("jump");
   hitSound = this.sound.add("hit");
