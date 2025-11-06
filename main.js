@@ -49,7 +49,8 @@ let penguin,
   pipes,
   score = 0,
   scoreText,
-  titleText;
+  titleText,
+  instructionText;
 let gameOver = false,
   gameStarted = false;
 let background;
@@ -130,7 +131,7 @@ function create() {
     .setDepth(10)
     .setVisible(false); // Hide score initially
 
-  // Title during idle stage, positioned high
+  // Title during idle stage
   titleText = this.add
     .text(BASE_WIDTH / 2, BASE_HEIGHT / 6, "Flappy Penguin", {
       fontSize: "48px",
@@ -138,6 +139,23 @@ function create() {
       stroke: "#000",
       strokeThickness: 6,
     })
+    .setOrigin(0.5)
+    .setDepth(10);
+
+  // Instructional text below title and to right of penguin
+  instructionText = this.add
+    .text(
+      BASE_WIDTH / 2,
+      BASE_HEIGHT / 3,
+      "Use mouse or spacebar to start\n(click for mobile)",
+      {
+        fontSize: "24px",
+        fill: "#fff",
+        stroke: "#000",
+        strokeThickness: 4,
+        align: "center",
+      }
+    )
     .setOrigin(0.5)
     .setDepth(10);
 
@@ -166,8 +184,10 @@ function startGame() {
   gameStarted = true;
   idleTween.stop();
   penguin.body.allowGravity = true;
+
   scoreText.setVisible(true);
-  titleText.setVisible(false); // Hide title once game starts
+  titleText.setVisible(false);
+  instructionText.setVisible(false);
 
   this.time.addEvent({
     delay: 1500,
