@@ -24,9 +24,9 @@ let BOTTOM_COLLIDER_OFFSET_X = 45;
 let BOTTOM_COLLIDER_OFFSET_Y = 0;
 
 // Adjustable penguin circle collider
-let PENGUIN_COLLIDER_RADIUS_RATIO = 0.6; // fraction of penguin display width
-let PENGUIN_COLLIDER_OFFSET_X = 10; // move right
-let PENGUIN_COLLIDER_OFFSET_Y = 10; // move down
+let PENGUIN_COLLIDER_RADIUS_RATIO = 0.6;
+let PENGUIN_COLLIDER_OFFSET_X = 10;
+let PENGUIN_COLLIDER_OFFSET_Y = 10;
 
 const config = {
   type: Phaser.AUTO,
@@ -45,17 +45,16 @@ const config = {
 
 new Phaser.Game(config);
 
-let penguin;
-let pipes;
-let score = 0;
-let scoreText;
-let gameOver = false;
-let gameStarted = false;
+let penguin,
+  pipes,
+  score = 0,
+  scoreText;
+let gameOver = false,
+  gameStarted = false;
 let background;
 
 // Sounds
-let jumpSound;
-let hitSound;
+let jumpSound, hitSound;
 
 // Idle animation
 let idleTween;
@@ -64,14 +63,11 @@ function preload() {
   this.load.image("background_1", "assets/background_1.jpg");
   this.load.image("background_2", "assets/background_2.jpg");
   this.load.image("background_3", "assets/background_3.jpg");
-
   this.load.image("pipeTop", "assets/pipe_top.png");
   this.load.image("pipeBottom", "assets/pipe_bottom.png");
-
   this.load.image("penguin_idle", "assets/penguin_idle.png");
   this.load.image("penguin_jump", "assets/penguin_jump.png");
   this.load.image("penguin_death", "assets/penguin_death.png");
-
   this.load.audio("jump", "assets/jump.wav");
   this.load.audio("hit", "assets/hit.wav");
 }
@@ -97,7 +93,6 @@ function create() {
     penguin.displayHeight / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_Y
   );
 
-  // Freeze physics until first flap
   penguin.body.allowGravity = false;
   penguin.body.setVelocity(0);
 
@@ -110,11 +105,10 @@ function create() {
     strokeThickness: 3,
   });
 
-  // Sounds
   jumpSound = this.sound.add("jump");
   hitSound = this.sound.add("hit");
 
-  // Idle "bobbing" animation
+  // Idle bobbing animation
   idleTween = this.tweens.add({
     targets: penguin,
     y: penguin.y + 20,
@@ -124,10 +118,24 @@ function create() {
     ease: "Sine.easeInOut",
   });
 
+  // Background selector
+  const bgSelect = document.getElementById("backgroundSelect");
+  if (bgSelect) {
+    bgSelect.value = "background_1";
+    bgSelect.addEventListener("change", () => {
+      const selected = bgSelect.value;
+      if (this.textures.exists(selected)) {
+        background.setTexture(selected);
+        background.setDisplaySize(BASE_WIDTH, BASE_HEIGHT);
+      }
+    });
+  }
+
   // Start game on first input
   this.input.once("pointerdown", startGame, this);
   this.input.keyboard.once("keydown-SPACE", startGame, this);
 
+  // Flap input
   this.input.on("pointerdown", flap, this);
   this.input.keyboard.on("keydown-SPACE", flap, this);
 
@@ -137,7 +145,6 @@ function create() {
 function startGame() {
   gameStarted = true;
 
-  // Stop idle animation and enable physics
   idleTween.stop();
   penguin.body.allowGravity = true;
 
@@ -167,8 +174,7 @@ function update() {
 }
 
 function flap() {
-  if (gameOver) return;
-  if (!gameStarted) return; // don't flap before starting
+  if (gameOver || !gameStarted) return;
   penguin.setVelocityY(-340);
   penguin.setTexture("penguin_jump");
   jumpSound.play();
@@ -189,16 +195,14 @@ function addPipeRow() {
   const maxGapCenter = BASE_HEIGHT - currentGapSize / 2 - 40;
   const gapCenter = Phaser.Math.Between(minGapCenter, maxGapCenter);
 
-  const topY = gapCenter - currentGapSize / 2;
-  const bottomY = gapCenter + currentGapSize / 2;
   const spawnX = BASE_WIDTH + (PIPE_TEXTURE_W * PIPE_SCALE) / 2 + 10;
 
   const topPipe = pipes
-    .create(spawnX, topY, "pipeTop")
+    .create(spawnX, gapCenter - currentGapSize / 2, "pipeTop")
     .setScale(PIPE_SCALE)
     .setOrigin(0.5, 1);
   const bottomPipe = pipes
-    .create(spawnX, bottomY, "pipeBottom")
+    .create(spawnX, gapCenter + currentGapSize / 2, "pipeBottom")
     .setScale(PIPE_SCALE)
     .setOrigin(0.5, 0);
 
@@ -208,7 +212,6 @@ function addPipeRow() {
     pipe.body.allowGravity = false;
   });
 
-  // Colliders
   topPipe.body.setSize(
     topPipe.displayWidth * TOP_COLLIDER_WIDTH_RATIO,
     topPipe.displayHeight * TOP_COLLIDER_HEIGHT_RATIO
@@ -228,8 +231,13 @@ function addPipeRow() {
     bottomPipe.displayHeight - bottomPipe.body.height + BOTTOM_COLLIDER_OFFSET_Y
   );
 
-  score++;
-  scoreText.setText("Score: " + score);
+  // Increment score starting at 3rd pipe
+  if (score >= 2) {
+    score++;
+    scoreText.setText("Score: " + score);
+  } else {
+    score++;
+  }
 }
 
 function hitPipe() {
