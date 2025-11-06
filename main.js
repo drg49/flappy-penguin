@@ -49,6 +49,9 @@ let gameOver = false;
 let gameStarted = false;
 let background;
 
+let jumpSound;
+let hitSound;
+
 function preload() {
   this.load.image("background_1", "assets/background_1.jpg");
   this.load.image("background_2", "assets/background_2.jpg");
@@ -70,6 +73,10 @@ function create() {
     .image(0, 0, "background_1")
     .setOrigin(0, 0)
     .setDisplaySize(BASE_WIDTH, BASE_HEIGHT);
+
+  // Load sounds
+  jumpSound = this.sound.add("jump");
+  hitSound = this.sound.add("hit");
 
   penguin = this.physics.add.sprite(
     BASE_WIDTH * 0.25,
@@ -108,7 +115,10 @@ function create() {
     loop: true,
   });
 
-  this.physics.add.collider(penguin, pipes, hitPipe, null, this);
+  // Unified collision
+  this.physics.add.collider(penguin, pipes, () => {
+    playHitAndEnd(this);
+  });
 
   const bgSelect = document.getElementById("backgroundSelect");
   if (bgSelect) {
@@ -129,8 +139,10 @@ function update() {
   if (penguin.body.velocity.y > 0) penguin.setTexture("penguin_idle");
 
   const safeMargin = penguin.displayHeight / 2;
+
+  // Check collision with top/bottom edges
   if (penguin.y < safeMargin || penguin.y > BASE_HEIGHT - safeMargin) {
-    endGame(this);
+    playHitAndEnd(this);
   }
 
   pipes.getChildren().forEach((pipe) => {
@@ -142,7 +154,7 @@ function flap() {
   if (gameOver) return;
   penguin.setVelocityY(-340);
   penguin.setTexture("penguin_jump");
-  if (this.sound.get("jump")) this.sound.play("jump");
+  jumpSound.play();
 }
 
 function addPipeRow() {
@@ -202,10 +214,11 @@ function addPipeRow() {
   scoreText.setText("Score: " + score);
 }
 
-function hitPipe() {
+// Unified hit handler
+function playHitAndEnd(scene) {
   if (gameOver) return;
-  if (this.sound.get("hit")) this.sound.play("hit");
-  endGame(this);
+  hitSound.play();
+  endGame(scene);
 }
 
 function endGame(scene) {
@@ -213,6 +226,7 @@ function endGame(scene) {
   penguin.setTexture("penguin_death");
   penguin.setVelocity(0);
   pipes.getChildren().forEach((p) => p.setVelocityX(0));
+
   scene.add.text(BASE_WIDTH / 2 - 80, BASE_HEIGHT / 2, "Game Over", {
     fontSize: "36px",
     fill: "#fff",
