@@ -53,9 +53,12 @@ let gameOver = false;
 let gameStarted = false;
 let background;
 
-// Sound variables
+// Sounds
 let jumpSound;
 let hitSound;
+
+// Idle animation
+let idleTween;
 
 function preload() {
   this.load.image("background_1", "assets/background_1.jpg");
@@ -85,15 +88,18 @@ function create() {
     "penguin_idle"
   );
   penguin.setScale(0.95);
+  penguin.setCollideWorldBounds(true);
 
-  // Circle collider
   const pengRadius = (penguin.displayWidth * PENGUIN_COLLIDER_RADIUS_RATIO) / 2;
   penguin.body.setCircle(pengRadius);
   penguin.body.setOffset(
     penguin.displayWidth / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_X,
     penguin.displayHeight / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_Y
   );
-  penguin.setCollideWorldBounds(true);
+
+  // Freeze physics until first flap
+  penguin.body.allowGravity = false;
+  penguin.body.setVelocity(0);
 
   pipes = this.physics.add.group();
 
@@ -104,34 +110,43 @@ function create() {
     strokeThickness: 3,
   });
 
-  // Add sounds
+  // Sounds
   jumpSound = this.sound.add("jump");
   hitSound = this.sound.add("hit");
+
+  // Idle "bobbing" animation
+  idleTween = this.tweens.add({
+    targets: penguin,
+    y: penguin.y + 20,
+    duration: 600,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut",
+  });
+
+  // Start game on first input
+  this.input.once("pointerdown", startGame, this);
+  this.input.keyboard.once("keydown-SPACE", startGame, this);
 
   this.input.on("pointerdown", flap, this);
   this.input.keyboard.on("keydown-SPACE", flap, this);
 
-  addPipeRow.call(this);
+  this.physics.add.collider(penguin, pipes, hitPipe, null, this);
+}
 
+function startGame() {
+  gameStarted = true;
+
+  // Stop idle animation and enable physics
+  idleTween.stop();
+  penguin.body.allowGravity = true;
+
+  addPipeRow.call(this);
   this.time.addEvent({
     delay: 1500,
     callback: addPipeRow,
     callbackScope: this,
     loop: true,
-  });
-
-  this.physics.add.collider(penguin, pipes, hitPipe, null, this);
-
-  const bgSelect = document.getElementById("backgroundSelect");
-  if (bgSelect) {
-    bgSelect.addEventListener("change", () => {
-      background.setTexture(bgSelect.value);
-      background.setDisplaySize(BASE_WIDTH, BASE_HEIGHT);
-    });
-  }
-
-  this.time.delayedCall(150, () => {
-    gameStarted = true;
   });
 }
 
@@ -153,6 +168,7 @@ function update() {
 
 function flap() {
   if (gameOver) return;
+  if (!gameStarted) return; // don't flap before starting
   penguin.setVelocityY(-340);
   penguin.setTexture("penguin_jump");
   jumpSound.play();
@@ -161,14 +177,12 @@ function flap() {
 function addPipeRow() {
   if (gameOver) return;
 
-  // Shrink gap based on score but clamp to MIN_GAP_SIZE
   let gapReduction = Math.floor(score / 5);
   const currentGapSize = Phaser.Math.Clamp(
     BASE_GAP_SIZE - gapReduction,
     MIN_GAP_SIZE,
     MAX_GAP_SIZE
   );
-
   console.log("Current Gap Size:", currentGapSize);
 
   const minGapCenter = currentGapSize / 2 + 40;
@@ -194,30 +208,25 @@ function addPipeRow() {
     pipe.body.allowGravity = false;
   });
 
-  // Top pipe collider
-  const topColliderWidth = topPipe.displayWidth * TOP_COLLIDER_WIDTH_RATIO;
-  const topColliderHeight = topPipe.displayHeight * TOP_COLLIDER_HEIGHT_RATIO;
-  const topOffsetX =
-    (topPipe.displayWidth - topColliderWidth) / 2 + TOP_COLLIDER_OFFSET_X;
-  const topOffsetY =
-    topPipe.displayHeight - topColliderHeight + TOP_COLLIDER_OFFSET_Y;
+  // Colliders
+  topPipe.body.setSize(
+    topPipe.displayWidth * TOP_COLLIDER_WIDTH_RATIO,
+    topPipe.displayHeight * TOP_COLLIDER_HEIGHT_RATIO
+  );
+  topPipe.body.setOffset(
+    (topPipe.displayWidth - topPipe.body.width) / 2 + TOP_COLLIDER_OFFSET_X,
+    topPipe.displayHeight - topPipe.body.height + TOP_COLLIDER_OFFSET_Y
+  );
 
-  topPipe.body.setSize(topColliderWidth, topColliderHeight);
-  topPipe.body.setOffset(topOffsetX, topOffsetY);
-
-  // Bottom pipe collider
-  const bottomColliderWidth =
-    bottomPipe.displayWidth * BOTTOM_COLLIDER_WIDTH_RATIO;
-  const bottomColliderHeight =
-    bottomPipe.displayHeight * BOTTOM_COLLIDER_HEIGHT_RATIO;
-  const bottomOffsetX =
-    (bottomPipe.displayWidth - bottomColliderWidth) / 2 +
-    BOTTOM_COLLIDER_OFFSET_X;
-  const bottomOffsetY =
-    bottomPipe.displayHeight - bottomColliderHeight + BOTTOM_COLLIDER_OFFSET_Y;
-
-  bottomPipe.body.setSize(bottomColliderWidth, bottomColliderHeight);
-  bottomPipe.body.setOffset(bottomOffsetX, bottomOffsetY);
+  bottomPipe.body.setSize(
+    bottomPipe.displayWidth * BOTTOM_COLLIDER_WIDTH_RATIO,
+    bottomPipe.displayHeight * BOTTOM_COLLIDER_HEIGHT_RATIO
+  );
+  bottomPipe.body.setOffset(
+    (bottomPipe.displayWidth - bottomPipe.body.width) / 2 +
+      BOTTOM_COLLIDER_OFFSET_X,
+    bottomPipe.displayHeight - bottomPipe.body.height + BOTTOM_COLLIDER_OFFSET_Y
+  );
 
   score++;
   scoreText.setText("Score: " + score);
