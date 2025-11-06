@@ -5,7 +5,11 @@ const PIPE_SCALE = 0.75;
 const PIPE_TEXTURE_W = 360;
 const PIPE_TEXTURE_H = 693;
 const PIPE_SPEED = -220;
-const GAP_SIZE = 220; // vertical gap for penguin
+
+// Gap settings
+const BASE_GAP_SIZE = 220;
+const MIN_GAP_SIZE = 150;
+const MAX_GAP_SIZE = 220;
 
 // Adjustable top pipe collider
 let TOP_COLLIDER_WIDTH_RATIO = 0.4;
@@ -49,6 +53,7 @@ let gameOver = false;
 let gameStarted = false;
 let background;
 
+// Sound variables
 let jumpSound;
 let hitSound;
 
@@ -73,10 +78,6 @@ function create() {
     .image(0, 0, "background_1")
     .setOrigin(0, 0)
     .setDisplaySize(BASE_WIDTH, BASE_HEIGHT);
-
-  // Load sounds
-  jumpSound = this.sound.add("jump");
-  hitSound = this.sound.add("hit");
 
   penguin = this.physics.add.sprite(
     BASE_WIDTH * 0.25,
@@ -103,6 +104,10 @@ function create() {
     strokeThickness: 3,
   });
 
+  // Add sounds
+  jumpSound = this.sound.add("jump");
+  hitSound = this.sound.add("hit");
+
   this.input.on("pointerdown", flap, this);
   this.input.keyboard.on("keydown-SPACE", flap, this);
 
@@ -115,10 +120,7 @@ function create() {
     loop: true,
   });
 
-  // Unified collision
-  this.physics.add.collider(penguin, pipes, () => {
-    playHitAndEnd(this);
-  });
+  this.physics.add.collider(penguin, pipes, hitPipe, null, this);
 
   const bgSelect = document.getElementById("backgroundSelect");
   if (bgSelect) {
@@ -139,10 +141,9 @@ function update() {
   if (penguin.body.velocity.y > 0) penguin.setTexture("penguin_idle");
 
   const safeMargin = penguin.displayHeight / 2;
-
-  // Check collision with top/bottom edges
   if (penguin.y < safeMargin || penguin.y > BASE_HEIGHT - safeMargin) {
-    playHitAndEnd(this);
+    if (!gameOver) hitSound.play();
+    endGame(this);
   }
 
   pipes.getChildren().forEach((pipe) => {
@@ -160,15 +161,23 @@ function flap() {
 function addPipeRow() {
   if (gameOver) return;
 
-  const pipeHeight = PIPE_TEXTURE_H * PIPE_SCALE;
-  const pipeWidth = PIPE_TEXTURE_W * PIPE_SCALE;
-  const minGapCenter = GAP_SIZE / 2 + 40;
-  const maxGapCenter = BASE_HEIGHT - GAP_SIZE / 2 - 40;
+  // Shrink gap based on score but clamp to MIN_GAP_SIZE
+  let gapReduction = Math.floor(score / 5);
+  const currentGapSize = Phaser.Math.Clamp(
+    BASE_GAP_SIZE - gapReduction,
+    MIN_GAP_SIZE,
+    MAX_GAP_SIZE
+  );
+
+  console.log("Current Gap Size:", currentGapSize);
+
+  const minGapCenter = currentGapSize / 2 + 40;
+  const maxGapCenter = BASE_HEIGHT - currentGapSize / 2 - 40;
   const gapCenter = Phaser.Math.Between(minGapCenter, maxGapCenter);
 
-  const topY = gapCenter - GAP_SIZE / 2;
-  const bottomY = gapCenter + GAP_SIZE / 2;
-  const spawnX = BASE_WIDTH + pipeWidth / 2 + 10;
+  const topY = gapCenter - currentGapSize / 2;
+  const bottomY = gapCenter + currentGapSize / 2;
+  const spawnX = BASE_WIDTH + (PIPE_TEXTURE_W * PIPE_SCALE) / 2 + 10;
 
   const topPipe = pipes
     .create(spawnX, topY, "pipeTop")
@@ -214,11 +223,10 @@ function addPipeRow() {
   scoreText.setText("Score: " + score);
 }
 
-// Unified hit handler
-function playHitAndEnd(scene) {
+function hitPipe() {
   if (gameOver) return;
   hitSound.play();
-  endGame(scene);
+  endGame(this);
 }
 
 function endGame(scene) {
@@ -226,7 +234,6 @@ function endGame(scene) {
   penguin.setTexture("penguin_death");
   penguin.setVelocity(0);
   pipes.getChildren().forEach((p) => p.setVelocityX(0));
-
   scene.add.text(BASE_WIDTH / 2 - 80, BASE_HEIGHT / 2, "Game Over", {
     fontSize: "36px",
     fill: "#fff",
