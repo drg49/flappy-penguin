@@ -73,52 +73,12 @@ function preload() {
 }
 
 function create() {
+  // Background with localStorage persistence
   background = this.add
     .image(0, 0, "background_1")
     .setOrigin(0, 0)
     .setDisplaySize(BASE_WIDTH, BASE_HEIGHT);
 
-  penguin = this.physics.add.sprite(
-    BASE_WIDTH * 0.25,
-    BASE_HEIGHT / 2,
-    "penguin_idle"
-  );
-  penguin.setScale(0.95);
-  penguin.setCollideWorldBounds(true);
-
-  const pengRadius = (penguin.displayWidth * PENGUIN_COLLIDER_RADIUS_RATIO) / 2;
-  penguin.body.setCircle(pengRadius);
-  penguin.body.setOffset(
-    penguin.displayWidth / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_X,
-    penguin.displayHeight / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_Y
-  );
-
-  penguin.body.allowGravity = false;
-  penguin.body.setVelocity(0);
-
-  pipes = this.physics.add.group();
-
-  scoreText = this.add.text(12, 10, "Score: 0", {
-    fontSize: "24px",
-    fill: "#fff",
-    stroke: "#000",
-    strokeThickness: 3,
-  });
-
-  jumpSound = this.sound.add("jump");
-  hitSound = this.sound.add("hit");
-
-  // Idle bobbing animation
-  idleTween = this.tweens.add({
-    targets: penguin,
-    y: penguin.y + 20,
-    duration: 600,
-    yoyo: true,
-    repeat: -1,
-    ease: "Sine.easeInOut",
-  });
-
-  // Background selector with localStorage persistence
   const bgSelect = document.getElementById("backgroundSelect");
   if (bgSelect) {
     const savedBackground =
@@ -140,11 +100,46 @@ function create() {
     });
   }
 
-  // Start game on first input
+  // Penguin setup
+  penguin = this.physics.add.sprite(
+    BASE_WIDTH * 0.25,
+    BASE_HEIGHT / 2,
+    "penguin_idle"
+  );
+  penguin.setScale(0.95);
+  penguin.setCollideWorldBounds(true);
+  const pengRadius = (penguin.displayWidth * PENGUIN_COLLIDER_RADIUS_RATIO) / 2;
+  penguin.body.setCircle(pengRadius);
+  penguin.body.setOffset(
+    penguin.displayWidth / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_X,
+    penguin.displayHeight / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_Y
+  );
+  penguin.body.allowGravity = false;
+  penguin.body.setVelocity(0);
+
+  pipes = this.physics.add.group();
+
+  scoreText = this.add.text(12, 10, "Score: 0", {
+    fontSize: "24px",
+    fill: "#fff",
+    stroke: "#000",
+    strokeThickness: 3,
+  });
+
+  jumpSound = this.sound.add("jump");
+  hitSound = this.sound.add("hit");
+
+  idleTween = this.tweens.add({
+    targets: penguin,
+    y: penguin.y + 20,
+    duration: 600,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut",
+  });
+
   this.input.once("pointerdown", startGame, this);
   this.input.keyboard.once("keydown-SPACE", startGame, this);
-
-  // Flap input
   this.input.on("pointerdown", flap, this);
   this.input.keyboard.on("keydown-SPACE", flap, this);
 
@@ -153,11 +148,9 @@ function create() {
 
 function startGame() {
   gameStarted = true;
-
   idleTween.stop();
   penguin.body.allowGravity = true;
 
-  addPipeRow.call(this);
   this.time.addEvent({
     delay: 1500,
     callback: addPipeRow,
@@ -177,8 +170,18 @@ function update() {
     endGame(this);
   }
 
+  // Destroy offscreen pipes
   pipes.getChildren().forEach((pipe) => {
     if (pipe.x + pipe.displayWidth / 2 < 0) pipe.destroy();
+  });
+
+  // Check for scoring
+  pipes.getChildren().forEach((pipe) => {
+    if (!pipe.scored && pipe.texture.key === "pipeTop" && penguin.x > pipe.x) {
+      score++;
+      scoreText.setText("Score: " + score);
+      pipe.scored = true; // mark this pipe pair as scored
+    }
   });
 }
 
@@ -198,7 +201,6 @@ function addPipeRow() {
     MIN_GAP_SIZE,
     MAX_GAP_SIZE
   );
-  console.log("Current Gap Size:", currentGapSize);
 
   const minGapCenter = currentGapSize / 2 + 40;
   const maxGapCenter = BASE_HEIGHT - currentGapSize / 2 - 40;
@@ -219,6 +221,7 @@ function addPipeRow() {
     pipe.setVelocityX(PIPE_SPEED);
     pipe.setImmovable(true);
     pipe.body.allowGravity = false;
+    pipe.scored = false; // flag to track if penguin passed it
   });
 
   topPipe.body.setSize(
@@ -239,14 +242,6 @@ function addPipeRow() {
       BOTTOM_COLLIDER_OFFSET_X,
     bottomPipe.displayHeight - bottomPipe.body.height + BOTTOM_COLLIDER_OFFSET_Y
   );
-
-  // Increment score starting at 3rd pipe
-  if (score >= 2) {
-    score++;
-    scoreText.setText("Score: " + score);
-  } else {
-    score++;
-  }
 }
 
 function hitPipe() {
