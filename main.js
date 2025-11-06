@@ -118,15 +118,24 @@ function create() {
     ease: "Sine.easeInOut",
   });
 
-  // Background selector
+  // Background selector with localStorage persistence
   const bgSelect = document.getElementById("backgroundSelect");
   if (bgSelect) {
-    bgSelect.value = "background_1";
+    const savedBackground =
+      localStorage.getItem("selectedBackground") || "background_1";
+    bgSelect.value = savedBackground;
+
+    if (this.textures.exists(savedBackground)) {
+      background.setTexture(savedBackground);
+      background.setDisplaySize(BASE_WIDTH, BASE_HEIGHT);
+    }
+
     bgSelect.addEventListener("change", () => {
       const selected = bgSelect.value;
       if (this.textures.exists(selected)) {
         background.setTexture(selected);
         background.setDisplaySize(BASE_WIDTH, BASE_HEIGHT);
+        localStorage.setItem("selectedBackground", selected);
       }
     });
   }
