@@ -50,7 +50,8 @@ let penguin,
   score = 0,
   scoreText,
   titleText,
-  instructionText;
+  instructionText,
+  creatorText;
 let gameOver = false,
   gameStarted = false;
 let background;
@@ -75,7 +76,7 @@ function preload() {
 }
 
 function create() {
-  // Background with localStorage persistence
+  // Background
   background = this.add
     .image(0, 0, "background_1")
     .setOrigin(0, 0)
@@ -133,11 +134,22 @@ function create() {
 
   // Title during idle stage
   titleText = this.add
-    .text(BASE_WIDTH / 2, BASE_HEIGHT / 6, "Flappy Penguin", {
+    .text(BASE_WIDTH / 2, BASE_HEIGHT / 8, "Flappy Penguin", {
       fontSize: "48px",
       fill: "#fff",
       stroke: "#000",
       strokeThickness: 6,
+    })
+    .setOrigin(0.5)
+    .setDepth(10);
+
+  // Creator text below title
+  creatorText = this.add
+    .text(BASE_WIDTH / 2, BASE_HEIGHT / 8 + 45, "Created by Daniel Gavin", {
+      fontSize: "16px",
+      fill: "#fff",
+      stroke: "#000",
+      strokeThickness: 3,
     })
     .setOrigin(0.5)
     .setDepth(10);
@@ -185,9 +197,12 @@ function startGame() {
   idleTween.stop();
   penguin.body.allowGravity = true;
 
-  scoreText.setVisible(true);
+  // Hide title, creator, and instruction
   titleText.setVisible(false);
   instructionText.setVisible(false);
+  creatorText.setVisible(false);
+
+  scoreText.setVisible(true);
 
   this.time.addEvent({
     delay: 1500,
