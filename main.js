@@ -19,6 +19,11 @@ let BOTTOM_COLLIDER_HEIGHT_RATIO = 0.97;
 let BOTTOM_COLLIDER_OFFSET_X = 45;
 let BOTTOM_COLLIDER_OFFSET_Y = 0;
 
+// Adjustable penguin circle collider
+let PENGUIN_COLLIDER_RADIUS_RATIO = 0.6; // fraction of penguin display width
+let PENGUIN_COLLIDER_OFFSET_X = 10; // move right
+let PENGUIN_COLLIDER_OFFSET_Y = 10; // move down
+
 const config = {
   type: Phaser.AUTO,
   physics: {
@@ -71,13 +76,14 @@ function create() {
     BASE_HEIGHT / 2,
     "penguin_idle"
   );
-  penguin.setScale(0.65);
+  penguin.setScale(0.95);
 
-  const pengRadius = (penguin.displayWidth * 0.36) / 2;
+  // Circle collider
+  const pengRadius = (penguin.displayWidth * PENGUIN_COLLIDER_RADIUS_RATIO) / 2;
   penguin.body.setCircle(pengRadius);
   penguin.body.setOffset(
-    penguin.displayWidth / 2 - pengRadius,
-    penguin.displayHeight / 2 - pengRadius
+    penguin.displayWidth / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_X,
+    penguin.displayHeight / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_Y
   );
   penguin.setCollideWorldBounds(true);
 
@@ -167,7 +173,7 @@ function addPipeRow() {
     pipe.body.allowGravity = false;
   });
 
-  // Top pipe collider - fully adjustable
+  // Top pipe collider
   const topColliderWidth = topPipe.displayWidth * TOP_COLLIDER_WIDTH_RATIO;
   const topColliderHeight = topPipe.displayHeight * TOP_COLLIDER_HEIGHT_RATIO;
   const topOffsetX =
@@ -178,17 +184,19 @@ function addPipeRow() {
   topPipe.body.setSize(topColliderWidth, topColliderHeight);
   topPipe.body.setOffset(topOffsetX, topOffsetY);
 
-  // Bottom pipe collider - fully adjustable
-  const colliderWidth = bottomPipe.displayWidth * BOTTOM_COLLIDER_WIDTH_RATIO;
-  const colliderHeight =
+  // Bottom pipe collider
+  const bottomColliderWidth =
+    bottomPipe.displayWidth * BOTTOM_COLLIDER_WIDTH_RATIO;
+  const bottomColliderHeight =
     bottomPipe.displayHeight * BOTTOM_COLLIDER_HEIGHT_RATIO;
-  const offsetX =
-    (bottomPipe.displayWidth - colliderWidth) / 2 + BOTTOM_COLLIDER_OFFSET_X;
-  const offsetY =
-    bottomPipe.displayHeight - colliderHeight + BOTTOM_COLLIDER_OFFSET_Y;
+  const bottomOffsetX =
+    (bottomPipe.displayWidth - bottomColliderWidth) / 2 +
+    BOTTOM_COLLIDER_OFFSET_X;
+  const bottomOffsetY =
+    bottomPipe.displayHeight - bottomColliderHeight + BOTTOM_COLLIDER_OFFSET_Y;
 
-  bottomPipe.body.setSize(colliderWidth, colliderHeight);
-  bottomPipe.body.setOffset(offsetX, offsetY);
+  bottomPipe.body.setSize(bottomColliderWidth, bottomColliderHeight);
+  bottomPipe.body.setOffset(bottomOffsetX, bottomOffsetY);
 
   score++;
   scoreText.setText("Score: " + score);
