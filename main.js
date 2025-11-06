@@ -48,7 +48,8 @@ new Phaser.Game(config);
 let penguin,
   pipes,
   score = 0,
-  scoreText;
+  scoreText,
+  titleText;
 let gameOver = false,
   gameStarted = false;
 let background;
@@ -126,11 +127,24 @@ function create() {
       stroke: "#000",
       strokeThickness: 3,
     })
+    .setDepth(10)
+    .setVisible(false); // Hide score initially
+
+  // Title during idle stage, positioned high
+  titleText = this.add
+    .text(BASE_WIDTH / 2, BASE_HEIGHT / 6, "Flappy Penguin", {
+      fontSize: "48px",
+      fill: "#fff",
+      stroke: "#000",
+      strokeThickness: 6,
+    })
+    .setOrigin(0.5)
     .setDepth(10);
 
   jumpSound = this.sound.add("jump");
   hitSound = this.sound.add("hit");
 
+  // Idle bobbing animation
   idleTween = this.tweens.add({
     targets: penguin,
     y: penguin.y + 20,
@@ -152,6 +166,8 @@ function startGame() {
   gameStarted = true;
   idleTween.stop();
   penguin.body.allowGravity = true;
+  scoreText.setVisible(true);
+  titleText.setVisible(false); // Hide title once game starts
 
   this.time.addEvent({
     delay: 1500,
@@ -172,17 +188,15 @@ function update() {
     endGame(this);
   }
 
-  // Destroy offscreen pipes
   pipes.getChildren().forEach((pipe) => {
     if (pipe.x + pipe.displayWidth / 2 < 0) pipe.destroy();
   });
 
-  // Check for scoring
   pipes.getChildren().forEach((pipe) => {
     if (!pipe.scored && pipe.texture.key === "pipeTop" && penguin.x > pipe.x) {
       score++;
       scoreText.setText("Score: " + score);
-      pipe.scored = true; // mark this pipe pair as scored
+      pipe.scored = true;
     }
   });
 }
@@ -223,7 +237,7 @@ function addPipeRow() {
     pipe.setVelocityX(PIPE_SPEED);
     pipe.setImmovable(true);
     pipe.body.allowGravity = false;
-    pipe.scored = false; // flag to track if penguin passed it
+    pipe.scored = false;
   });
 
   topPipe.body.setSize(
