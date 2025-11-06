@@ -7,14 +7,16 @@ const PIPE_TEXTURE_H = 693;
 const PIPE_SPEED = -220;
 const GAP_SIZE = 220; // vertical gap for penguin
 
-// Adjustable collider ratios
+// Adjustable top pipe collider
 const TOP_COLLIDER_WIDTH_RATIO = 0.6;
-const TOP_COLLIDER_HEIGHT_RATIO = 0.95;
+const TOP_COLLIDER_HEIGHT_RATIO = 1.05;
+const TOP_COLLIDER_OFFSET_X = 0;
+const TOP_COLLIDER_OFFSET_Y = -5;
 
-const BOTTOM_COLLIDER_WIDTH_RATIO = 0.4; // smaller number narrower
-const BOTTOM_COLLIDER_HEIGHT_RATIO = 2;
-const BOTTOM_COLLIDER_OFFSET_X = 45; // horizontal tweak
-const BOTTOM_COLLIDER_OFFSET_Y = 7; // vertical tweak
+// Adjustable bottom pipe collider
+const BOTTOM_COLLIDER_WIDTH_RATIO = 0.4;
+const BOTTOM_COLLIDER_HEIGHT_RATIO = 0.97; // now close to pipe height
+const BOTTOM_COLLIDER_OFFSET_X = 45;
 
 const config = {
   type: Phaser.AUTO,
@@ -164,24 +166,28 @@ function addPipeRow() {
     pipe.body.allowGravity = false;
   });
 
-  // Top pipe collider
+  // Top pipe collider - fully adjustable
   topPipe.body.setSize(
     topPipe.displayWidth * TOP_COLLIDER_WIDTH_RATIO,
     topPipe.displayHeight * TOP_COLLIDER_HEIGHT_RATIO
   );
   topPipe.body.setOffset(
     (topPipe.displayWidth - topPipe.displayWidth * TOP_COLLIDER_WIDTH_RATIO) /
-      2,
-    topPipe.displayHeight - topPipe.displayHeight * TOP_COLLIDER_HEIGHT_RATIO
+      2 +
+      TOP_COLLIDER_OFFSET_X,
+    topPipe.displayHeight -
+      topPipe.displayHeight * TOP_COLLIDER_HEIGHT_RATIO +
+      TOP_COLLIDER_OFFSET_Y
   );
 
-  // Bottom pipe collider - fully adjustable
-  const scaledWidth = bottomPipe.displayWidth;
-  const scaledHeight = bottomPipe.displayHeight;
-  const colliderWidth = scaledWidth * BOTTOM_COLLIDER_WIDTH_RATIO;
-  const colliderHeight = scaledHeight * BOTTOM_COLLIDER_HEIGHT_RATIO;
-  const offsetX = (scaledWidth - colliderWidth) / 2 + BOTTOM_COLLIDER_OFFSET_X; // horizontal tweak
-  const offsetY = BOTTOM_COLLIDER_OFFSET_Y; // vertical tweak
+  // Bottom pipe collider - adjusted height and centered
+  const colliderWidth = bottomPipe.displayWidth * BOTTOM_COLLIDER_WIDTH_RATIO;
+  const colliderHeight =
+    bottomPipe.displayHeight * BOTTOM_COLLIDER_HEIGHT_RATIO;
+  const offsetX =
+    (bottomPipe.displayWidth - colliderWidth) / 2 + BOTTOM_COLLIDER_OFFSET_X;
+  const offsetY =
+    bottomPipe.displayHeight - colliderHeight;
 
   bottomPipe.body.setSize(colliderWidth, colliderHeight);
   bottomPipe.body.setOffset(offsetX, offsetY);
