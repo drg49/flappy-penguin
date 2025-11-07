@@ -33,7 +33,7 @@ const config = {
   type: Phaser.AUTO,
   physics: {
     default: "arcade",
-    arcade: { gravity: { y: 900 }, debug: true },
+    arcade: { gravity: { y: 900 } },
   },
   scale: {
     mode: Phaser.Scale.FIT,
@@ -308,16 +308,24 @@ function hitPipe() {
 
 function endGame(scene) {
   gameOver = true;
-  penguin.setTexture("penguin_death");
-  penguin.setVelocity(0);
 
+  // Change texture to death and enable ragdoll
+  penguin.setTexture("penguin_death");
+  penguin.body.allowGravity = true;
+  penguin.setVelocity(
+    Phaser.Math.Between(-200, 200),
+    Phaser.Math.Between(-400, -200)
+  );
+  penguin.setAngularVelocity(Phaser.Math.Between(-200, 200));
+
+  // Stop pipes
   if (pipeTimer) {
     pipeTimer.remove(false);
     pipeTimer = null;
   }
-
   pipes.getChildren().forEach((p) => p.setVelocityX(0));
 
+  // Show Game Over UI
   gameOverText = scene.add
     .text(BASE_WIDTH / 2, BASE_HEIGHT / 2, "Game Over", {
       fontSize: "36px",
@@ -376,6 +384,8 @@ function restartGame(scene) {
   penguin.setPosition(BASE_WIDTH * 0.25, BASE_HEIGHT / 2);
   penguin.body.allowGravity = false;
   penguin.setVelocity(0);
+  penguin.setAngularVelocity(0);
+  penguin.setAngle(0);
 
   const pengWidth = penguin.displayWidth * PENGUIN_COLLIDER_WIDTH_RATIO;
   const pengHeight = penguin.displayHeight * PENGUIN_COLLIDER_HEIGHT_RATIO;
