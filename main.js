@@ -329,7 +329,7 @@ function endGame(scene) {
     })
     .setOrigin(0.5);
 
-  // Restart button
+  // Restart button with hover effect and cursor
   restartButton = scene.add
     .text(BASE_WIDTH / 2, BASE_HEIGHT / 2 + 50, "Restart", {
       fontSize: "28px",
@@ -338,7 +338,15 @@ function endGame(scene) {
       strokeThickness: 4,
     })
     .setOrigin(0.5)
-    .setInteractive();
+    .setInteractive({ useHandCursor: true }); // cursor becomes pointer
+
+  restartButton.on("pointerover", () => {
+    restartButton.setStyle({ fill: "#ffff00" }); // highlight color
+  });
+
+  restartButton.on("pointerout", () => {
+    restartButton.setStyle({ fill: "#ffd700" }); // original color
+  });
 
   restartButton.on("pointerdown", () => restartGame(scene));
 }
