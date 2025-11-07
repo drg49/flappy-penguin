@@ -197,7 +197,7 @@ function create() {
 }
 
 function startGame() {
-  if (gameStarted) return; // Prevent multiple starts
+  if (gameStarted) return;
   gameStarted = true;
   idleTween.stop();
   penguin.body.allowGravity = true;
@@ -311,7 +311,6 @@ function endGame(scene) {
   penguin.setTexture("penguin_death");
   penguin.setVelocity(0);
 
-  // Stop pipe timer
   if (pipeTimer) {
     pipeTimer.remove(false);
     pipeTimer = null;
@@ -319,7 +318,6 @@ function endGame(scene) {
 
   pipes.getChildren().forEach((p) => p.setVelocityX(0));
 
-  // Game Over text
   gameOverText = scene.add
     .text(BASE_WIDTH / 2, BASE_HEIGHT / 2, "Game Over", {
       fontSize: "36px",
@@ -329,23 +327,28 @@ function endGame(scene) {
     })
     .setOrigin(0.5);
 
-  // Restart button with hover effect and cursor
+  // Styled restart button
   restartButton = scene.add
-    .text(BASE_WIDTH / 2, BASE_HEIGHT / 2 + 50, "Restart", {
+    .text(0, 0, "Restart", {
       fontSize: "28px",
       fill: "#ffd700",
       stroke: "#000",
       strokeThickness: 4,
+      padding: { x: 20, y: 10 },
+      backgroundColor: "#444",
     })
     .setOrigin(0.5)
-    .setInteractive({ useHandCursor: true }); // cursor becomes pointer
+    .setPosition(BASE_WIDTH / 2, BASE_HEIGHT / 2 + 50)
+    .setInteractive({ useHandCursor: true });
 
   restartButton.on("pointerover", () => {
-    restartButton.setStyle({ fill: "#ffff00" }); // highlight color
+    restartButton.setStyle({ fill: "#ffff00", backgroundColor: "#666" });
+    restartButton.setScale(1.1);
   });
 
   restartButton.on("pointerout", () => {
-    restartButton.setStyle({ fill: "#ffd700" }); // original color
+    restartButton.setStyle({ fill: "#ffd700", backgroundColor: "#444" });
+    restartButton.setScale(1);
   });
 
   restartButton.on("pointerdown", () => restartGame(scene));
@@ -374,7 +377,6 @@ function restartGame(scene) {
   penguin.body.allowGravity = false;
   penguin.setVelocity(0);
 
-  // Reapply rectangle collider on restart
   const pengWidth = penguin.displayWidth * PENGUIN_COLLIDER_WIDTH_RATIO;
   const pengHeight = penguin.displayHeight * PENGUIN_COLLIDER_HEIGHT_RATIO;
   penguin.body.setSize(pengWidth, pengHeight);
@@ -394,7 +396,6 @@ function restartGame(scene) {
 
   instructionText.setVisible(true);
 
-  // Reattach listeners to start game again
   scene.input.once("pointerdown", startGame, scene);
   scene.input.keyboard.once("keydown-SPACE", startGame, scene);
 }
