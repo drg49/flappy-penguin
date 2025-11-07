@@ -62,6 +62,11 @@ let jumpSound, hitSound;
 // Idle animation
 let idleTween;
 
+// References for Game Over UI and pipe timer
+let gameOverText;
+let pipeTimer;
+let restartButton;
+
 function preload() {
   this.load.image("background_1", "assets/background_1.jpg");
   this.load.image("background_2", "assets/background_2.jpg");
@@ -177,6 +182,7 @@ function create() {
     ease: "Sine.easeInOut",
   });
 
+  // First-time start listeners
   this.input.once("pointerdown", startGame, this);
   this.input.keyboard.once("keydown-SPACE", startGame, this);
   this.input.on("pointerdown", flap, this);
@@ -186,6 +192,7 @@ function create() {
 }
 
 function startGame() {
+  if (gameStarted) return; // Prevent multiple starts
   gameStarted = true;
   idleTween.stop();
   penguin.body.allowGravity = true;
@@ -196,12 +203,14 @@ function startGame() {
 
   scoreText.setVisible(true);
 
-  this.time.addEvent({
-    delay: 1500,
-    callback: addPipeRow,
-    callbackScope: this,
-    loop: true,
-  });
+  if (!pipeTimer) {
+    pipeTimer = this.time.addEvent({
+      delay: 1500,
+      callback: addPipeRow,
+      callbackScope: this,
+      loop: true,
+    });
+  }
 }
 
 function update() {
@@ -209,7 +218,6 @@ function update() {
 
   if (penguin.body.velocity.y > 0) penguin.setTexture("penguin_idle");
 
-  // ✅ World boundary collision using actual physics body
   if (penguin.body.top <= 0 || penguin.body.bottom >= BASE_HEIGHT) {
     if (!gameOver) hitSound.play();
     endGame(this);
@@ -297,11 +305,74 @@ function endGame(scene) {
   gameOver = true;
   penguin.setTexture("penguin_death");
   penguin.setVelocity(0);
+
+  // Stop pipe timer
+  if (pipeTimer) {
+    pipeTimer.remove(false);
+    pipeTimer = null;
+  }
+
   pipes.getChildren().forEach((p) => p.setVelocityX(0));
-  scene.add.text(BASE_WIDTH / 2 - 80, BASE_HEIGHT / 2, "Game Over", {
-    fontSize: "36px",
-    fill: "#fff",
-    stroke: "#000",
-    strokeThickness: 4,
+
+  // Game Over text
+  gameOverText = scene.add
+    .text(BASE_WIDTH / 2, BASE_HEIGHT / 2, "Game Over", {
+      fontSize: "36px",
+      fill: "#fff",
+      stroke: "#000",
+      strokeThickness: 4,
+    })
+    .setOrigin(0.5);
+
+  // Restart button
+  restartButton = scene.add
+    .text(BASE_WIDTH / 2, BASE_HEIGHT / 2 + 50, "Restart", {
+      fontSize: "28px",
+      fill: "#ffd700",
+      stroke: "#000",
+      strokeThickness: 4,
+    })
+    .setOrigin(0.5)
+    .setInteractive();
+
+  restartButton.on("pointerdown", () => restartGame(scene));
+}
+
+function restartGame(scene) {
+  pipes.clear(true, true);
+
+  if (gameOverText) {
+    gameOverText.destroy();
+    gameOverText = null;
+  }
+  if (restartButton) {
+    restartButton.destroy();
+    restartButton = null;
+  }
+
+  gameOver = false;
+  gameStarted = false;
+  score = 0;
+  scoreText.setText("Score: 0");
+  scoreText.setVisible(false);
+
+  penguin.setTexture("penguin_idle");
+  penguin.setPosition(BASE_WIDTH * 0.25, BASE_HEIGHT / 2);
+  penguin.body.allowGravity = false;
+  penguin.setVelocity(0);
+
+  idleTween = scene.tweens.add({
+    targets: penguin,
+    y: penguin.y + 20,
+    duration: 600,
+    yoyo: true,
+    repeat: -1,
+    ease: "Sine.easeInOut",
   });
+
+  instructionText.setVisible(true);
+
+  // Reattach listeners to start game again
+  scene.input.once("pointerdown", startGame, scene);
+  scene.input.keyboard.once("keydown-SPACE", startGame, scene);
 }
