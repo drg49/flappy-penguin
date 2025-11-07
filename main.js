@@ -23,10 +23,11 @@ let BOTTOM_COLLIDER_HEIGHT_RATIO = 0.97;
 let BOTTOM_COLLIDER_OFFSET_X = 45;
 let BOTTOM_COLLIDER_OFFSET_Y = 0;
 
-// Adjustable penguin circle collider
-let PENGUIN_COLLIDER_RADIUS_RATIO = 0.69;
-let PENGUIN_COLLIDER_OFFSET_X = 10;
-let PENGUIN_COLLIDER_OFFSET_Y = 10;
+// Adjustable penguin rectangle collider
+let PENGUIN_COLLIDER_WIDTH_RATIO = 0.3;
+let PENGUIN_COLLIDER_HEIGHT_RATIO = 0.65;
+let PENGUIN_COLLIDER_OFFSET_X = 5;
+let PENGUIN_COLLIDER_OFFSET_Y = 6.5;
 
 const config = {
   type: Phaser.AUTO,
@@ -116,12 +117,16 @@ function create() {
   );
   penguin.setScale(0.95);
   penguin.setCollideWorldBounds(true);
-  const pengRadius = (penguin.displayWidth * PENGUIN_COLLIDER_RADIUS_RATIO) / 2;
-  penguin.body.setCircle(pengRadius);
+
+  // Rectangle collider for penguin
+  const pengWidth = penguin.displayWidth * PENGUIN_COLLIDER_WIDTH_RATIO;
+  const pengHeight = penguin.displayHeight * PENGUIN_COLLIDER_HEIGHT_RATIO;
+  penguin.body.setSize(pengWidth, pengHeight);
   penguin.body.setOffset(
-    penguin.displayWidth / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_X,
-    penguin.displayHeight / 2 - pengRadius + PENGUIN_COLLIDER_OFFSET_Y
+    (penguin.displayWidth - pengWidth) / 2 + PENGUIN_COLLIDER_OFFSET_X,
+    (penguin.displayHeight - pengHeight) / 2 + PENGUIN_COLLIDER_OFFSET_Y
   );
+
   penguin.body.allowGravity = false;
   penguin.body.setVelocity(0);
 
@@ -360,6 +365,15 @@ function restartGame(scene) {
   penguin.setPosition(BASE_WIDTH * 0.25, BASE_HEIGHT / 2);
   penguin.body.allowGravity = false;
   penguin.setVelocity(0);
+
+  // Reapply rectangle collider on restart
+  const pengWidth = penguin.displayWidth * PENGUIN_COLLIDER_WIDTH_RATIO;
+  const pengHeight = penguin.displayHeight * PENGUIN_COLLIDER_HEIGHT_RATIO;
+  penguin.body.setSize(pengWidth, pengHeight);
+  penguin.body.setOffset(
+    (penguin.displayWidth - pengWidth) / 2 + PENGUIN_COLLIDER_OFFSET_X,
+    (penguin.displayHeight - pengHeight) / 2 + PENGUIN_COLLIDER_OFFSET_Y
+  );
 
   idleTween = scene.tweens.add({
     targets: penguin,
