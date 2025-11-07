@@ -130,9 +130,8 @@ function create() {
       strokeThickness: 3,
     })
     .setDepth(10)
-    .setVisible(false); // Hide score initially
+    .setVisible(false);
 
-  // Title during idle stage
   titleText = this.add
     .text(BASE_WIDTH / 2, BASE_HEIGHT / 8, "Flappy Penguin", {
       fontSize: "48px",
@@ -140,10 +139,8 @@ function create() {
       stroke: "#000",
       strokeThickness: 6,
     })
-    .setOrigin(0.5)
-    .setDepth(10);
+    .setOrigin(0.5);
 
-  // Creator text below title
   creatorText = this.add
     .text(BASE_WIDTH / 2, BASE_HEIGHT / 8 + 45, "Created by Daniel Gavin", {
       fontSize: "16px",
@@ -151,10 +148,8 @@ function create() {
       stroke: "#000",
       strokeThickness: 3,
     })
-    .setOrigin(0.5)
-    .setDepth(10);
+    .setOrigin(0.5);
 
-  // Instructional text below title and to right of penguin
   instructionText = this.add
     .text(
       BASE_WIDTH / 2,
@@ -168,13 +163,11 @@ function create() {
         align: "center",
       }
     )
-    .setOrigin(0.5)
-    .setDepth(10);
+    .setOrigin(0.5);
 
   jumpSound = this.sound.add("jump");
   hitSound = this.sound.add("hit");
 
-  // Idle bobbing animation
   idleTween = this.tweens.add({
     targets: penguin,
     y: penguin.y + 20,
@@ -197,7 +190,6 @@ function startGame() {
   idleTween.stop();
   penguin.body.allowGravity = true;
 
-  // Hide title, creator, and instruction
   titleText.setVisible(false);
   instructionText.setVisible(false);
   creatorText.setVisible(false);
@@ -217,8 +209,8 @@ function update() {
 
   if (penguin.body.velocity.y > 0) penguin.setTexture("penguin_idle");
 
-  const safeMargin = penguin.displayHeight / 2;
-  if (penguin.y < safeMargin || penguin.y > BASE_HEIGHT - safeMargin) {
+  // ✅ World boundary collision using actual physics body
+  if (penguin.body.top <= 0 || penguin.body.bottom >= BASE_HEIGHT) {
     if (!gameOver) hitSound.play();
     endGame(this);
   }
